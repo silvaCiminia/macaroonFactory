@@ -3,6 +3,7 @@
 import os
 import subprocess
 import time
+import interfaces
 
 # Consolidate input methods
 try:
@@ -15,6 +16,7 @@ working = True
 macchanger, ip, iwconfig = '', '', ''
 
 def logoPrint():
+    """Prints the logo"""
     print("""
  \33[92m,     .
 \33[92m( ( \33[91mo \33[92m) )
@@ -24,6 +26,7 @@ def logoPrint():
     """)
 
 def changeMac(interface, mode='none'):
+    """Changes an interface's (or multiple interfaces') MAC address"""
     global ip, iwconfig, macchanger
     if mode == 'none':
         print("")
@@ -31,6 +34,7 @@ def changeMac(interface, mode='none'):
         print("\033[91m[\033[92m0\033[91m]\033[0m: Change MAC address")
         print("\033[91m[\033[92m1\033[91m]\033[0m: Flip monitor mode on/off")
         print("\033[91m[\033[92m2\033[91m]\033[0m: Both")
+        print("\033[91m[\033[92mq\033[91m]\033[0m: Back")
         print("\033[92m################")
         sel = input("\033[91m[*] \033[0mSelection: ")
         if sel == '0':
@@ -39,6 +43,8 @@ def changeMac(interface, mode='none'):
             mode = 'mon'
         elif sel == '2':
             mode = 'all'
+        elif sel == 'q':
+            return
         else:
             print("\033[91m[*] \033[0mInvalid selection!")
             return()
@@ -67,33 +73,9 @@ def changeMac(interface, mode='none'):
             os.system("{} link set {} up".format(ip, interface['name']))
         except:
             print("\n\033[91m[*] \033[0mInvalid interface!")
-
-def intGet():
-    global working, macchanger, ip ,iwconfig
-    interfaces = []
-    a = str(subprocess.check_output("{} link show".format(ip), shell=True))
-    ints = a.split(': ')
-    for i in range(len(ints)):
-        if len(ints[i].split()) == 1:
-            if ints[i] not in ["1", "lo", "b'1"]:
-                interface = {'name':str(ints[i])}
-                interfaces.append(interface)
-    # Get interface properties
-    for interface in interfaces:
-        name = interface['name']
-        macs = str(subprocess.check_output("{} -s {}".format(macchanger, name), shell=True))
-        interface['cMac'] = macs.split()[2]
-        interface['cVend'] = macs.split("(")[1].split(")")[0]
-        interface['pMac'] = macs.split("\n")[1].split()[2]
-        interface['pVend'] = macs.split("\n")[1].split("(")[1].split(")")[0]
-        try:
-            mon = str(subprocess.check_output("{} {} 2> /dev/null".format(iwconfig, name), shell=True)).split()
-            mon1 = mon[3].split(':')[1]
-            if mon1 == 'off/any':
-                mon1 = mon[4].split(':')[1]
-            interface['mon'] = mon1
-        except:
-            interface['mon'] = 'Wired'
+def intQuery(interfaces):
+    """Gets user interface selection from a list of interfaces"""
+    global working, macchanger, ip, iwconfig
     intRef = {}
     i = 0
     print("")
@@ -121,34 +103,47 @@ def intGet():
     else:
         print("\033[91m[\033[92m0\033[91m]\033[0m: Change MAC addresses")
         print("\033[91m[\033[92m1\033[91m]\033[0m: Handle each interface individually")
+        print("\033[91m[\033[92m2\033[91m]\033[0m: Back")
         print("\033[92m################")
         sel = input("\033[91m[*] \033[0mSelection: ")
         mode = 'none'
         if sel == '0':
             mode = 'mac'
+        elif sel == 'q':
+            return
         for interface in interfaces:
             changeMac(interface, mode)
             allInt = True
     if not allInt:
         changeMac(interface)
-if os.getuid() != 0:
-    print("Must be run as root!")
-else:
-    macchanger = subprocess.check_output("which macchanger", shell=True)[:-1]
-    ip = subprocess.check_output("which ip", shell=True)[:-1]
-    iwconfig = subprocess.check_output("which iwconfig", shell=True)[:-1]
-    if macchanger == '':
+def checkPaths():
+    """Fills program path variables"""
+    global macchanger, ip, iwconfig
+    ret = interfaces.pathGet()
+    if ret == '1':
         print("MACCHANGER not installed! Please install and try again.")
         quit()
-    if ip == '':
+    if ret == '2':
         print("IP not installed! Please install and try again.")
         quit()
-    if iwconfig == '':
+    if ret == '3':
         print("IWCONFIG not installed! Please install and try again.")
         quit()
-    print(ip)
-    logoPrint()
-    while working:
-        intGet()
-    print("\033[91m[*] \033[31mHappy Trails, Stranger.")
-    print("")
+    else:
+        macchanger = ret[0]
+        ip = ret[1]
+        iwconfig = ret[2]
+def menu():
+    """Displays the user interface"""
+    if os.getuid() != 0:
+        print("Must be run as root!")
+    else:
+        global working
+        checkPaths()
+        logoPrint()
+        while working:
+            intQuery(interfaces.intGet())
+        print("\033[91m[*] \033[31mHappy Trails, Stranger.")
+        print("")
+if __name__ == '__main__':
+    menu()
