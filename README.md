@@ -6,7 +6,7 @@ A command line interface for easy mac address spoofing and interface mode switch
 ```
 apt-get install macchanger ip iwconfig
 git clone https://github.com/silvaCiminia/macaroonFactory && cd macaroonFactory
-python macaroonFactory.py
+python mcrf.py
 ```
 ## Usage
-`sudo python msrf.py`
+`python msrf.py`
