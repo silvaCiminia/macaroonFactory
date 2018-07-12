@@ -144,6 +144,6 @@ def menu():
         while working:
             intQuery(interfaces.intGet())
         print("\033[91m[*] \033[31mHappy Trails, Stranger.")
-        print("")
+        print("\033[0m")
 if __name__ == '__main__':
     menu()
