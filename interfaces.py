@@ -4,9 +4,9 @@ import subprocess
 
 def pathGet():
     """Gets the path of macchanger, ip, and iwlink (required to gather interface info and change settings)"""
-    macchanger = subprocess.check_output("which macchanger", shell=True)[:-1]
-    ip = subprocess.check_output("which ip", shell=True)[:-1]
-    iwconfig = subprocess.check_output("which iwconfig", shell=True)[:-1]
+    macchanger = subprocess.check_output("which macchanger", shell=True)[:-1].decode("utf-8")
+    ip = subprocess.check_output("which ip", shell=True)[:-1].decode("utf-8")
+    iwconfig = subprocess.check_output("which iwconfig", shell=True)[:-1].decode("utf-8")
     if macchanger == '':
         return(1)
     if ip == '':
@@ -29,16 +29,16 @@ def intGet():
     # Get interface properties
     for interface in interfaces:
         name = interface['name']
-        macs = str(subprocess.check_output("{} -s {}".format(macchanger, name), shell=True))
+        macs = subprocess.check_output("{} -s {}".format(macchanger, name), shell=True).decode("utf-8")
         interface['cMac'] = macs.split()[2]
         interface['cVend'] = macs.split("(")[1].split(")")[0]
         interface['pMac'] = macs.split("\n")[1].split()[2]
         interface['pVend'] = macs.split("\n")[1].split("(")[1].split(")")[0]
         try:
-            mon = str(subprocess.check_output("{} {} 2> /dev/null".format(iwconfig, name), shell=True)).split()
-            mon1 = mon[3].split(':')[1]
+            mon = subprocess.check_output("{} {} 2> /dev/null".format(iwconfig, name), shell=True).split()
+            mon1 = mon[3].decode("utf-8").split(':')[1]
             if mon1 == 'off/any':
-                mon1 = mon[4].split(':')[1]
+                mon1 = mon[4].decode("utf-8").split(':')[1]
             interface['mon'] = mon1
         except:
             interface['mon'] = 'Wired'

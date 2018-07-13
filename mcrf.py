@@ -6,6 +6,7 @@ import time
 import interfaces
 
 # Consolidate input methods
+
 try:
     input = raw_input
 except:
